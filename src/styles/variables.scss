@@ -1,0 +1,101 @@
+/* ===========================
+   VARIABLES
+   All colors, sizes, fonts
+   =========================== */
+
+// ============ COLORS ============
+
+// Background
+$bg-primary: #121212;
+$bg-secondary: #1e1e1e;
+$bg-tertiary: #2a2a2a;
+$bg-card: #1a1a1a;
+
+// Text
+$text-primary: #ffffff;
+$text-secondary: #b0b0b0;
+$text-muted: #666666;
+$text-disabled: #444444;
+
+// Accent Colors
+$color-bullish: #00c853; // Green (price increase)
+$color-bearish: #ff3d00; // Red (price decrease)
+$color-accent: #667eea; // Purple
+$color-accent-2: #764ba2; // Secondary accent
+$color-warning: #ffa500; // Orange (reconnecting)
+$color-info: #3d5afe; // Blue
+
+// Borders & Dividers
+$border-color: #2a2a2a;
+$border-color-light: #333333;
+
+// Shadows
+$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+$shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+// Glow Effects (for neon accents)
+$glow-bullish: 0 0 20px rgba(0, 200, 83, 0.3);
+$glow-bearish: 0 0 20px rgba(255, 61, 0, 0.3);
+
+// ============ TYPOGRAPHY ============
+
+$font-family-base:
+  -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+  'Helvetica Neue', sans-serif;
+$font-family-mono: 'Courier New', 'Consolas', 'Monaco', monospace;
+
+$font-size-xs: 0.75rem; // 12px
+$font-size-sm: 0.875rem; // 14px
+$font-size-base: 1rem; // 16px
+$font-size-lg: 1.125rem; // 18px
+$font-size-xl: 1.5rem; // 24px
+$font-size-2xl: 2rem; // 32px
+$font-size-3xl: 2.5rem; // 40px
+$font-size-4xl: 3rem; // 48px
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ============ SPACING ============
+
+$spacing-xs: 0.25rem; // 4px
+$spacing-sm: 0.5rem; // 8px
+$spacing-md: 1rem; // 16px
+$spacing-lg: 1.5rem; // 24px
+$spacing-xl: 2rem; // 32px
+$spacing-2xl: 3rem; // 48px
+
+// ============ BORDER RADIUS ============
+
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-full: 9999px;
+
+// ============ TRANSITIONS ============
+
+$transition-fast: 0.15s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// ============ BREAKPOINTS ============
+
+$breakpoint-xs: 480px;
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
+
+// ============ Z-INDEX ============
+
+$z-base: 1;
+$z-dropdown: 100;
+$z-sticky: 200;
+$z-modal: 300;
+$z-overlay: 400;
+$z-tooltip: 500;
