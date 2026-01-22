@@ -1,0 +1,121 @@
+@use 'styles/variables' as *;
+@use 'styles/mixins' as *;
+
+.chart-container {
+  @include card;
+  margin-top: $spacing-xl;
+  padding: $spacing-xl;
+  animation: fadeIn 1s ease;
+}
+
+.chart-header {
+  @include flex-between;
+  margin-bottom: $spacing-lg;
+
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+}
+
+h3 {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  margin: 0;
+}
+
+.chart-info {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  padding: $spacing-xs $spacing-md;
+  background: $bg-tertiary;
+  border-radius: $radius-md;
+}
+
+.chart-wrapper {
+  height: 300px;
+  width: 100%;
+
+  // Custom styles for ngx-charts
+  ::ng-deep {
+    .ngx-charts {
+      text {
+        fill: $text-secondary !important;
+        font-size: $font-size-xs !important;
+        font-family: $font-family-base !important;
+      }
+
+      .line-chart {
+        .line-series {
+          path {
+            stroke-width: 2px;
+          }
+        }
+      }
+
+      .gridline-path {
+        stroke: $border-color !important;
+        stroke-opacity: 0.3;
+      }
+
+      .tick {
+        line {
+          stroke: $border-color !important;
+        }
+      }
+
+      // Tooltip
+      .tooltip-anchor {
+        fill: $bg-tertiary !important;
+      }
+
+      .advanced-pie-legend {
+        color: $text-primary !important;
+      }
+    }
+  }
+
+  @include mobile {
+    height: 250px;
+  }
+}
+
+.chart-loading {
+  @include flex-center;
+  @include flex-column;
+  height: 300px;
+  gap: $spacing-md;
+  color: $text-secondary;
+
+  @include mobile {
+    height: 250px;
+  }
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid $bg-tertiary;
+  border-top-color: $color-accent;
+  border-radius: $radius-full;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -10,7 +10,9 @@
       "@shared/*": ["src/app/shared/*"],
       "@features/*": ["src/app/features/*"],
       "@env/*": ["src/environments/*"],
-      "@models/*": ["src/app/models/*"]
+      "@models/*": ["src/app/models/*"],
+      "@services/*": ["src/app/services/*"],
+      "@components/*": ["src/app/components/*"]
     },
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
