@@ -1,10 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
-import { CryptoService } from './services/crypto.service';
+import { CryptoService } from '@services/crypto.service';
 import { ConnectionStatus, PriceTrend } from '@models/ticker-data.model';
+import { ChartComponent } from '@components/chart/chart.component';
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  imports: [ChartComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })

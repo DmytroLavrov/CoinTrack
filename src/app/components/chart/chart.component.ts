@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { ChartDataPoint } from '@models/ticker-data.model';
-import { CryptoService } from 'src/app/services/crypto.service';
+import { CryptoService } from '@services/crypto.service';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 
 @Component({
