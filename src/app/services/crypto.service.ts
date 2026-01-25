@@ -1,13 +1,20 @@
-import { Injectable, OnDestroy, signal, WritableSignal } from '@angular/core';
-import { ConnectionStatus, PriceTrend, TickerData } from '@models/ticker-data.model';
-import { Subject, throttleTime } from 'rxjs';
+import { inject, Injectable, OnDestroy, signal, WritableSignal } from '@angular/core';
+import {
+  ChartDataPoint,
+  ConnectionStatus,
+  PriceTrend,
+  TickerData,
+} from '@models/ticker-data.model';
+import { interval, map, Observable, Subject, throttleTime, timestamp } from 'rxjs';
 import { BinanceTrade } from '@models/trade.model';
 import { environment } from '@env/environment';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CryptoService implements OnDestroy {
+  private http: HttpClient = inject(HttpClient);
   private ws?: WebSocket;
 
   // Previous price (to determine trend)
@@ -103,6 +110,28 @@ export class CryptoService implements OnDestroy {
       this.ws.close(1000, 'User disconnected');
       this.ws = undefined;
     }
+  }
+
+  // Loading history
+  public fetchHistory(symbol: string): Observable<ChartDataPoint[]> {
+    const url = `${environment.apiUrl}/klines`;
+
+    return this.http
+      .get<any[]>(url, {
+        params: {
+          symbol: symbol.toUpperCase(),
+          interval: '1s',
+          limit: '60',
+        },
+      })
+      .pipe(
+        map((data) =>
+          data.map((candle) => ({
+            timestamp: candle[0],
+            price: parseFloat(candle[4]),
+          })),
+        ),
+      );
   }
 
   // Tiker data update
