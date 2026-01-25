@@ -36,6 +36,9 @@ export class ChartComponent {
   // Formatted array for ngx-charts
   public formattedChartData = signal<any[]>([]);
 
+  // Current coin tracking
+  private lastSymbol = '';
+
   constructor() {
     // Import curveMonotoneX for smooth lines
     import('d3-shape').then((d3) => {
@@ -76,6 +79,12 @@ export class ChartComponent {
 
     // If price = 0, no data received yet
     if (tickerData.price === 0) return;
+
+    // If the symbol has changed, clear the graph.
+    if (this.lastSymbol && this.lastSymbol !== tickerData.symbol) {
+      this.chartData.set([]);
+    }
+    this.lastSymbol = tickerData.symbol;
 
     const newPoint: ChartDataPoint = {
       timestamp: Date.now(),
