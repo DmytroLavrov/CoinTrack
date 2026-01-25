@@ -9,6 +9,9 @@
 }
 
 header {
+  @include flex-center;
+  flex-direction: column;
+  gap: $spacing-md;
   text-align: center;
   margin-bottom: $spacing-2xl;
   animation: fadeIn 0.6s ease;
@@ -28,6 +31,36 @@ header p {
   color: $text-secondary;
   margin-top: $spacing-sm;
   font-size: $font-size-sm;
+}
+
+.coin-selector {
+  display: flex;
+  gap: $spacing-xs;
+  background: rgba($text-primary, 0.05);
+  padding: $spacing-xs;
+  border-radius: $radius-lg;
+
+  button {
+    background: transparent;
+    border: none;
+    color: $text-secondary;
+    padding: $spacing-sm $spacing-md;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+    border-radius: $radius-md;
+    transition: all $transition-base;
+
+    &:hover {
+      color: $text-primary;
+      background: rgba($text-primary, 0.05);
+    }
+
+    &.active {
+      background: $color-accent;
+      color: white;
+      box-shadow: 0 4px 12px rgba($color-accent, 0.3);
+    }
+  }
 }
 
 main {

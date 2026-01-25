@@ -98,6 +98,8 @@ export class CryptoService implements OnDestroy {
   // Disconnect to WebSocket
   public disconnectWebSocket(): void {
     if (this.ws) {
+      this.ws.onclose = null;
+
       this.ws.close(1000, 'User disconnected');
       this.ws = undefined;
     }

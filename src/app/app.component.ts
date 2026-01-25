@@ -12,6 +12,21 @@ import { ChartComponent } from '@components/chart/chart.component';
 export class AppComponent {
   public cryptoService: CryptoService = inject(CryptoService);
 
+  // List of coins for the selector
+  public coins = [
+    { id: 'BTCUSDT', name: 'BTC' },
+    { id: 'ETHUSDT', name: 'ETH' },
+    { id: 'SOLUSDT', name: 'SOL' },
+  ];
+
+  // Method for changing the coin
+  public selectCoin(symbol: string): void {
+    // Don't reconnect if the coin is already selected
+    if (this.cryptoService.tickerData().symbol === symbol) return;
+
+    this.cryptoService.changeSymbol(symbol);
+  }
+
   public statusClass = computed(() => {
     const status = this.cryptoService.connectionStatus();
     return `status-${status}`;

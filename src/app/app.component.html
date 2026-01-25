@@ -2,6 +2,17 @@
   <header>
     <h1>🪙 CoinTrack</h1>
     <p>Real-time Crypto Dashboard</p>
+
+    <div class="coin-selector">
+      @for (coin of coins; track coin.id) {
+        <button
+          (click)="selectCoin(coin.id)"
+          [class.active]="cryptoService.tickerData().symbol === coin.id"
+        >
+          {{ coin.name }}
+        </button>
+      }
+    </div>
   </header>
 
   <main>
