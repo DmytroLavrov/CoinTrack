@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { ChartDataPoint } from '@models/ticker-data.model';
 import { CryptoService } from '@services/crypto.service';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
@@ -12,6 +20,9 @@ import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 })
 export class ChartComponent {
   private cryptoService: CryptoService = inject(CryptoService);
+
+  // Updates only when the symbol changes (BTC → ETH), ignores price updates
+  private currentSymbol = computed(() => this.cryptoService.tickerData().symbol);
 
   // Array of points for the graph
   public chartData = signal<ChartDataPoint[]>([]);
@@ -36,9 +47,6 @@ export class ChartComponent {
   // Formatted array for ngx-charts
   public formattedChartData = signal<any[]>([]);
 
-  // Current coin tracking
-  private lastSymbol = '';
-
   constructor() {
     // Import curveMonotoneX for smooth lines
     import('d3-shape').then((d3) => {
@@ -58,6 +66,19 @@ export class ChartComponent {
         },
       ]);
     });
+
+    // Effect: follow the change of the symbol
+    effect(() => {
+      const symbol = this.currentSymbol();
+
+      // Use untracked to avoid creating an infinite loop
+      // if chartData were to be read internally (this is just a precaution)
+      untracked(() => {
+        if (symbol) {
+          this.loadHistory(symbol);
+        }
+      });
+    });
   }
 
   ngOnInit(): void {
@@ -73,18 +94,22 @@ export class ChartComponent {
     }
   }
 
+  // Loading history
+  private loadHistory(symbol: string): void {
+    this.cryptoService.fetchHistory(symbol).subscribe({
+      next: (history) => {
+        this.chartData.set(history);
+      },
+      error: (err) => console.error('Failed to load history:', err),
+    });
+  }
+
   // Adding a new point
   private addDataPoint(): void {
     const tickerData = this.cryptoService.tickerData();
 
     // If price = 0, no data received yet
     if (tickerData.price === 0) return;
-
-    // If the symbol has changed, clear the graph.
-    if (this.lastSymbol && this.lastSymbol !== tickerData.symbol) {
-      this.chartData.set([]);
-    }
-    this.lastSymbol = tickerData.symbol;
 
     const newPoint: ChartDataPoint = {
       timestamp: Date.now(),
