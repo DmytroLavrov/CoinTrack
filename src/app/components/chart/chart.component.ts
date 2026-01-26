@@ -1,15 +1,25 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
-  signal,
+  OnDestroy,
   untracked,
+  ViewChild,
 } from '@angular/core';
-import { ChartDataPoint } from '@models/ticker-data.model';
+import { CandleDataPoint } from '@models/ticker-data.model';
 import { CryptoService } from '@services/crypto.service';
-import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
+import {
+  createChart,
+  IChartApi,
+  ISeriesApi,
+  CandlestickData,
+  CandlestickSeries,
+} from 'lightweight-charts';
 
 @Component({
   selector: 'app-chart',
@@ -18,53 +28,28 @@ import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
   styleUrl: './chart.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ChartComponent {
+export class ChartComponent implements AfterViewInit, OnDestroy {
   private cryptoService: CryptoService = inject(CryptoService);
 
-  // Updates only when the symbol changes (BTC → ETH), ignores price updates
+  @ViewChild('chartContainer') chartContainer!: ElementRef<HTMLDivElement>;
+
+  private chart?: IChartApi;
+  private candlestickSeries?: ISeriesApi<'Candlestick'>;
+
+  private currentPrice = computed(() => this.cryptoService.tickerData().price);
   private currentSymbol = computed(() => this.cryptoService.tickerData().symbol);
 
-  // Array of points for the graph
-  public chartData = signal<ChartDataPoint[]>([]);
-
-  // Maximum number of points (60 seconds of history)
-  private readonly MAX_POINTS = 60;
-
-  // Interval for adding points (1 second)
-  private interval?: number;
-
-  // Color scheme for the graph
-  public colorScheme: Color = {
-    name: 'crypto',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: ['#667eea', '#764ba2'],
-  };
-
-  // Curve type (smooth line)
-  public curve: any;
-
-  // Formatted array for ngx-charts
-  public formattedChartData = signal<any[]>([]);
+  private lastCandle: CandleDataPoint | null = null;
 
   constructor() {
-    // Import curveMonotoneX for smooth lines
-    import('d3-shape').then((d3) => {
-      this.curve = d3.curveMonotoneX;
-    });
-
-    // Effect: update formattedChartData when chartData changes
+    // Effect: follow the price change (Real-time updates)
     effect(() => {
-      const data = this.chartData();
-      this.formattedChartData.set([
-        {
-          name: 'BTC Price',
-          series: data.map((point) => ({
-            name: new Date(point.timestamp),
-            value: point.price,
-          })),
-        },
-      ]);
+      const price = this.currentPrice();
+      // Use untracked to access lastCandle to avoid creating unnecessary dependencies,
+      // although it's not critical here, because lastCandle is not a signal.
+      untracked(() => {
+        this.updateLiveCandle(price);
+      });
     });
 
     // Effect: follow the change of the symbol
@@ -80,69 +65,96 @@ export class ChartComponent {
       });
     });
   }
+  ngAfterViewInit(): void {
+    // Initialize the graph
+    this.chart = createChart(this.chartContainer.nativeElement, {
+      layout: {
+        background: { color: 'transparent' },
+        textColor: '#A0AEC0',
+      },
+      grid: {
+        vertLines: { color: 'rgba(255, 255, 255, 0.1)' },
+        horzLines: { color: 'rgba(255, 255, 255, 0.1)' },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+      },
+    });
 
-  ngOnInit(): void {
-    // Add a new point every second
-    this.interval = window.setInterval(() => {
-      this.addDataPoint();
-    }, 1000);
-  }
+    // Setting up a series of candles
+    this.candlestickSeries = this.chart.addSeries(CandlestickSeries, {
+      upColor: '#48BB78',
+      downColor: '#F56565',
+      borderUpColor: '#48BB78',
+      borderDownColor: '#F56565',
+      wickUpColor: '#48BB78',
+      wickDownColor: '#F56565',
+    });
 
-  ngOnDestroy(): void {
-    if (this.interval) {
-      clearInterval(this.interval);
-    }
+    // Make the graph adaptive
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (entries.length === 0 || entries[0].target !== this.chartContainer.nativeElement) return;
+      const newRect = entries[0].contentRect;
+      this.chart?.applyOptions({ width: newRect.width, height: newRect.height });
+    });
+    resizeObserver.observe(this.chartContainer.nativeElement);
   }
 
   // Loading history
   private loadHistory(symbol: string): void {
     this.cryptoService.fetchHistory(symbol).subscribe({
-      next: (history) => {
-        this.chartData.set(history);
+      next: (data) => {
+        if (this.candlestickSeries && data.length > 0) {
+          // Load data
+          this.candlestickSeries.setData(data as CandlestickData[]);
+
+          // Remember the last candle to continue updating it
+          this.lastCandle = { ...data[data.length - 1] };
+
+          // Focus the graph on the latest data
+          this.chart?.timeScale().fitContent();
+        }
       },
       error: (err) => console.error('Failed to load history:', err),
     });
   }
 
-  // Adding a new point
-  private addDataPoint(): void {
-    const tickerData = this.cryptoService.tickerData();
+  private updateLiveCandle(price: number): void {
+    if (!this.candlestickSeries || !this.lastCandle || price === 0) return;
 
-    // If price = 0, no data received yet
-    if (tickerData.price === 0) return;
+    // Round the current time to the first minute (to know if a new candle has started)
+    // Divide by 60, round, multiply by 60.
+    const now = Math.floor(Date.now() / 1000);
+    const candleTimeStep = 60; // 1 minute
+    const currentCandleTime = Math.floor(now / candleTimeStep) * candleTimeStep;
 
-    const newPoint: ChartDataPoint = {
-      timestamp: Date.now(),
-      price: tickerData.price,
-    };
+    if (currentCandleTime === this.lastCandle.time) {
+      // === UPDATE CURRENT CANDLE ===
+      // Update High/Low/Close
+      this.lastCandle.close = price;
+      if (price > this.lastCandle.high) this.lastCandle.high = price;
+      if (price < this.lastCandle.low) this.lastCandle.low = price;
 
-    // Update the array
-    this.chartData.update((data) => {
-      const updated = [...data, newPoint];
+      this.candlestickSeries.update(this.lastCandle as CandlestickData);
+    } else if (currentCandleTime > this.lastCandle.time) {
+      // === CREATING A NEW CANDLE ===
+      const newHandle: CandleDataPoint = {
+        time: currentCandleTime,
+        open: this.lastCandle.close, // Opening = closing of the previous one
+        high: price,
+        low: price,
+        close: price,
+      };
 
-      // Delete old points (leave only the last 60)
-      if (updated.length > this.MAX_POINTS) {
-        return updated.slice(updated.length - this.MAX_POINTS);
-      }
-
-      return updated;
-    });
+      this.lastCandle = newHandle;
+      this.candlestickSeries.update(this.lastCandle as CandlestickData);
+    }
   }
 
-  // X-OSI formatting (Time)
-  public formatXAxis = (val: any): string => {
-    const date = new Date(val);
-    return date.toLocaleTimeString('en-US', {
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  };
-
-  // Y-OSI formatting (Time)
-  public formatYAxis = (val: number): string => {
-    return `$${val.toLocaleString('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })}`;
-  };
+  ngOnDestroy(): void {
+    if (this.chart) {
+      this.chart.remove();
+    }
+  }
 }

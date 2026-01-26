@@ -23,13 +23,17 @@ export enum PriceTrend {
 }
 
 /**
- * CHART DATA POINT
+ * CANDLE DATA POINT
  *
- * Single point on a price chart
+ * Single candlestick (OHLC) data point
+ * used for candlestick charts (Lightweight Charts)
  */
-export interface ChartDataPoint {
-  timestamp: number; // Time (X-axis)
-  price: number; // Price (Y-axis)
+export interface CandleDataPoint {
+  time: number; // Unix timestamp in seconds (required by Lightweight Charts)
+  open: number; // Opening price
+  high: number; // Highest price
+  low: number; // Lowest price
+  close: number; // Closing price
 }
 
 /**
