@@ -1,11 +1,11 @@
 import { inject, Injectable, OnDestroy, signal, WritableSignal } from '@angular/core';
 import {
-  ChartDataPoint,
+  CandleDataPoint,
   ConnectionStatus,
   PriceTrend,
   TickerData,
 } from '@models/ticker-data.model';
-import { interval, map, Observable, Subject, throttleTime, timestamp } from 'rxjs';
+import { map, Observable, Subject, throttleTime } from 'rxjs';
 import { BinanceTrade } from '@models/trade.model';
 import { environment } from '@env/environment';
 import { HttpClient } from '@angular/common/http';
@@ -113,7 +113,7 @@ export class CryptoService implements OnDestroy {
   }
 
   // Loading history
-  public fetchHistory(symbol: string): Observable<ChartDataPoint[]> {
+  public fetchHistory(symbol: string): Observable<CandleDataPoint[]> {
     const url = `${environment.apiUrl}/klines`;
 
     return this.http
@@ -127,8 +127,11 @@ export class CryptoService implements OnDestroy {
       .pipe(
         map((data) =>
           data.map((candle) => ({
-            timestamp: candle[0],
-            price: parseFloat(candle[4]),
+            time: candle[0] / 1000,
+            open: parseFloat(candle[1]),
+            high: parseFloat(candle[2]),
+            low: parseFloat(candle[3]),
+            close: parseFloat(candle[4]),
           })),
         ),
       );
