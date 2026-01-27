@@ -7,6 +7,7 @@ import {
   ElementRef,
   inject,
   OnDestroy,
+  signal,
   untracked,
   ViewChild,
 } from '@angular/core';
@@ -36,12 +37,38 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
   private chart?: IChartApi;
   private candlestickSeries?: ISeriesApi<'Candlestick'>;
 
+  public timeframes = ['1m', '5m', '15m', '1h', '4h'];
+  public activeTimeframe = signal('1m');
+
+  // Timeframe to seconds conversion chart (for candlestick calculation)
+  private timeframeToSeconds: Record<string, number> = {
+    '1m': 60,
+    '5m': 300,
+    '15m': 900,
+    '1h': 3600,
+    '4h': 14400,
+  };
+
   private currentPrice = computed(() => this.cryptoService.tickerData().price);
   private currentSymbol = computed(() => this.cryptoService.tickerData().symbol);
 
   private lastCandle: CandleDataPoint | null = null;
 
   constructor() {
+    // Effect: follow the change of the symbol or timeframe
+    effect(() => {
+      const symbol = this.currentSymbol();
+      const interval = this.activeTimeframe();
+
+      // Use untracked to avoid creating an infinite loop
+      // if chartData were to be read internally (this is just a precaution)
+      untracked(() => {
+        if (symbol && interval) {
+          this.loadHistory(symbol, interval);
+        }
+      });
+    });
+
     // Effect: follow the price change (Real-time updates)
     effect(() => {
       const price = this.currentPrice();
@@ -49,19 +76,6 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
       // although it's not critical here, because lastCandle is not a signal.
       untracked(() => {
         this.updateLiveCandle(price);
-      });
-    });
-
-    // Effect: follow the change of the symbol
-    effect(() => {
-      const symbol = this.currentSymbol();
-
-      // Use untracked to avoid creating an infinite loop
-      // if chartData were to be read internally (this is just a precaution)
-      untracked(() => {
-        if (symbol) {
-          this.loadHistory(symbol);
-        }
       });
     });
   }
@@ -101,9 +115,13 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
     resizeObserver.observe(this.chartContainer.nativeElement);
   }
 
+  public setTimeframe(tf: string): void {
+    this.activeTimeframe.set(tf);
+  }
+
   // Loading history
-  private loadHistory(symbol: string): void {
-    this.cryptoService.fetchHistory(symbol).subscribe({
+  private loadHistory(symbol: string, interval: string): void {
+    this.cryptoService.fetchHistory(symbol, interval).subscribe({
       next: (data) => {
         if (this.candlestickSeries && data.length > 0) {
           // Load data
@@ -123,11 +141,14 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
   private updateLiveCandle(price: number): void {
     if (!this.candlestickSeries || !this.lastCandle || price === 0) return;
 
+    const intervalSeconds = this.timeframeToSeconds[this.activeTimeframe()] || 60;
+
     // Round the current time to the first minute (to know if a new candle has started)
     // Divide by 60, round, multiply by 60.
     const now = Math.floor(Date.now() / 1000);
-    const candleTimeStep = 60; // 1 minute
-    const currentCandleTime = Math.floor(now / candleTimeStep) * candleTimeStep;
+
+    // Round the time to the beginning of the current interval
+    const currentCandleTime = Math.floor(now / intervalSeconds) * intervalSeconds;
 
     if (currentCandleTime === this.lastCandle.time) {
       // === UPDATE CURRENT CANDLE ===

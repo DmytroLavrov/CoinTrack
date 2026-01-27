@@ -50,6 +50,31 @@ export class CryptoService implements OnDestroy {
       .subscribe((trade) => this.updateTickerData(trade));
   }
 
+  // Loading history
+  public fetchHistory(symbol: string, interval: string): Observable<CandleDataPoint[]> {
+    const url = `${environment.apiUrl}/klines`;
+
+    return this.http
+      .get<any[]>(url, {
+        params: {
+          symbol: symbol.toUpperCase(),
+          interval,
+          limit: '60',
+        },
+      })
+      .pipe(
+        map((data) =>
+          data.map((candle) => ({
+            time: candle[0] / 1000,
+            open: parseFloat(candle[1]),
+            high: parseFloat(candle[2]),
+            low: parseFloat(candle[3]),
+            close: parseFloat(candle[4]),
+          })),
+        ),
+      );
+  }
+
   // Connect to WebSocket
   public connectWebSocket(symbol: string): void {
     this.disconnectWebSocket();
@@ -110,31 +135,6 @@ export class CryptoService implements OnDestroy {
       this.ws.close(1000, 'User disconnected');
       this.ws = undefined;
     }
-  }
-
-  // Loading history
-  public fetchHistory(symbol: string): Observable<CandleDataPoint[]> {
-    const url = `${environment.apiUrl}/klines`;
-
-    return this.http
-      .get<any[]>(url, {
-        params: {
-          symbol: symbol.toUpperCase(),
-          interval: '1s',
-          limit: '60',
-        },
-      })
-      .pipe(
-        map((data) =>
-          data.map((candle) => ({
-            time: candle[0] / 1000,
-            open: parseFloat(candle[1]),
-            high: parseFloat(candle[2]),
-            low: parseFloat(candle[3]),
-            close: parseFloat(candle[4]),
-          })),
-        ),
-      );
   }
 
   // Tiker data update
