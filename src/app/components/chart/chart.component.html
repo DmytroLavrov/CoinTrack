@@ -1,1 +1,13 @@
-<div #chartContainer class="chart-container"></div>
+<div class="chart-wrapper">
+  <div class="toolbar">
+    <div class="timeframes">
+      @for (tf of timeframes; track tf) {
+        <button [class.active]="activeTimeframe() === tf" (click)="setTimeframe(tf)">
+          {{ tf }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div #chartContainer class="chart-container"></div>
+</div>

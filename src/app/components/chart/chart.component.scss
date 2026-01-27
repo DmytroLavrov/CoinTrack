@@ -1,12 +1,58 @@
 @use 'styles/variables' as *;
+@use 'styles/mixins' as *;
 
-.chart-container {
+.chart-wrapper {
   margin-top: $spacing-xl;
-  padding: $spacing-sm;
+  padding: $spacing-md;
   animation: fadeIn 1s ease;
 
+  background: rgba($bg-secondary, 0.7);
+  border-radius: $radius-lg;
+  border: 1px solid rgba($text-primary, 0.1);
+
+  @include glass;
+}
+
+.toolbar {
+  @include flex-between;
+  justify-content: flex-end;
+  margin-bottom: $spacing-md;
+}
+
+.timeframes {
+  display: flex;
+  gap: $spacing-xs;
+  background: rgba($bg-primary, 0.4);
+  padding: $spacing-xs;
+  border-radius: $radius-md;
+
+  button {
+    background: transparent;
+    border: none;
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $radius-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      color: $text-primary;
+      background: rgba($text-primary, 0.1);
+    }
+
+    &.active {
+      background: $bg-tertiary;
+      color: $text-primary;
+      box-shadow: $shadow-sm;
+    }
+  }
+}
+
+.chart-container {
   width: 100%;
   height: 400px;
-  border-radius: 12px;
   overflow: hidden;
+  border-radius: $radius-md;
 }
